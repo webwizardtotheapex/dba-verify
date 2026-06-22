@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Verify a Certificate — Domain Blueprint Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Libre+Franklin:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#16243D;--ink-deep:#0E1626;--brass:#B0883B;--brass-soft:#C9A65A;--paper:#FBF9F4;--slate:#57607A;--line:#E4DCC9;--ok:#2F7A55;--warn:#9A6B1F}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{min-height:100vh;background:radial-gradient(120% 90% at 50% -10%,#fff 0%,var(--paper) 55%,#F2EEE4 100%);color:var(--ink);font-family:"Libre Franklin",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center;padding:28px 18px}
+  .card{width:100%;max-width:560px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 60px rgba(20,30,55,.12);overflow:hidden}
+  .top{height:5px;background:linear-gradient(90deg,var(--brass-soft),var(--brass))}
+  .pad{padding:30px 30px 26px}
+  header{display:flex;flex-direction:column;align-items:center;text-align:center}
+  .seal{width:62px;height:62px}
+  .wordmark{font-size:11px;letter-spacing:.3em;text-transform:uppercase;font-weight:600;color:var(--brass);margin-top:12px}
+  h1{font-family:"Fraunces",serif;font-weight:600;font-size:23px;margin:6px 0 0;color:var(--ink)}
+  .sub{font-size:13px;color:var(--slate);margin:6px 0 0}
+  .lookup{display:flex;gap:9px;margin:22px 0 4px}
+  .lookup input{flex:1;min-width:0;font:inherit;font-family:"IBM Plex Mono",monospace;font-size:15px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px 13px;background:#fff}
+  .lookup input:focus{outline:2px solid var(--brass);outline-offset:1px;border-color:transparent}
+  .lookup button{font:inherit;font-weight:600;font-size:15px;cursor:pointer;background:var(--ink);color:#fff;border:none;border-radius:10px;padding:12px 20px}
+  .lookup button:hover{background:var(--ink-deep)}
+  .lookup button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+
+  .result{margin-top:18px}
+  .state{display:flex;gap:14px;align-items:flex-start;padding:18px;border-radius:14px;border:1px solid var(--line);background:#FBFAF7}
+  .state.ok{border-color:#CDE7D8;background:#F3FAF5}
+  .state.warn{border-color:#EFE0C2;background:#FBF6EC}
+  .badge{flex:0 0 auto;width:40px;height:40px}
+  .state h2{font-family:"Fraunces",serif;font-weight:600;font-size:18px;margin:2px 0 2px}
+  .state p{font-size:13px;color:var(--slate);margin:2px 0 0;line-height:1.5}
+  .state .mono{font-family:"IBM Plex Mono",monospace;color:var(--ink)}
+
+  dl{margin:16px 0 0;border-top:1px solid var(--line)}
+  .rowr{display:flex;justify-content:space-between;gap:16px;padding:11px 2px;border-bottom:1px solid var(--line)}
+  dt{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);font-weight:600;flex:0 0 auto;align-self:center}
+  dd{margin:0;text-align:right;color:var(--ink);font-size:15px}
+  dd.name{font-family:"Fraunces",serif;font-weight:600;font-size:18px}
+  dd.mono{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--slate)}
+
+  .hide{display:none}
+  footer{text-align:center;font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.05em;color:var(--slate);padding:0 30px 24px}
+</style>
+</head>
+<body>
+  <main class="card">
+    <div class="top"></div>
+    <div class="pad">
+      <header>
+        <div class="seal" id="seal"></div>
+        <div class="wordmark">Domain Blueprint Academy</div>
+        <h1>Verify a certificate</h1>
+        <p class="sub">Enter the certificate number printed on the document to confirm it was issued by the Academy.</p>
+      </header>
+
+      <div class="lookup">
+        <input id="q" type="text" inputmode="latin" autocomplete="off" placeholder="e.g. DBA-2026-0001" aria-label="Certificate number">
+        <button id="go" type="button">Verify</button>
+      </div>
+
+      <div class="result" id="result">
+        <div class="state" id="idle">
+          <div class="badge">
+            <svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="none" stroke="#C9A65A" stroke-width="2"/><path d="M20 11v12" stroke="#B0883B" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="28.5" r="1.6" fill="#B0883B"/></svg>
+          </div>
+          <div><h2>Awaiting a number</h2><p>Type a certificate number above, or scan the QR code on the certificate.</p></div>
+        </div>
+      </div>
+    </div>
+    <footer>Issued by Toyslab Tech &amp; Innovations Ltd · RC 9053103</footer>
+  </main>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  function seal(issuer){
+    const top=(issuer||'').toUpperCase();
+    return '<svg viewBox="0 0 200 200" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" role="img" aria-label="Academy seal">'
+      +'<defs><path id="dbArc" d="M30 100 A70 70 0 0 1 170 100"/></defs>'
+      +'<circle cx="100" cy="100" r="94" fill="none" stroke="#B0883B" stroke-width="2"/>'
+      +'<circle cx="100" cy="100" r="87" fill="none" stroke="#C9A65A" stroke-width="1"/>'
+      +'<circle cx="100" cy="100" r="80" fill="none" stroke="#C9A65A" stroke-width="1.4" stroke-dasharray="1 5" opacity="0.85"/>'
+      +'<text fill="#B0883B" font-family="\'IBM Plex Mono\',monospace" font-size="10" letter-spacing="2" text-anchor="middle"><textPath href="#dbArc" xlink:href="#dbArc" startOffset="50%">'+top+'</textPath></text>'
+      +'<text x="100" y="108" text-anchor="middle" font-family="Fraunces,serif" font-weight="600" font-size="44" fill="#16243D">DB</text>'
+      +'<text x="100" y="128" text-anchor="middle" font-family="\'IBM Plex Mono\',monospace" font-size="11" letter-spacing="3" fill="#B0883B">.com</text>'
+      +'<line x1="80" y1="142" x2="120" y2="142" stroke="#C9A65A" stroke-width="1"/>'
+      +'<text x="100" y="154" text-anchor="middle" font-family="\'IBM Plex Mono\',monospace" font-size="8" letter-spacing="2" fill="#57607A">EST. 2026</text></svg>';
+  }
+  $('seal').innerHTML = seal('Domain Blueprint Academy');
+
+  const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  function render(html){ $('result').innerHTML = html; }
+  function verified(id, rec){
+    render(
+      '<div class="state ok"><div class="badge"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#E6F4EC" stroke="#2F7A55" stroke-width="2"/><path d="M13 20.5l4.5 4.5L27 15" fill="none" stroke="#2F7A55" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
+      +'<div><h2>Certificate verified</h2><p>This certificate number is recorded in the Academy register.</p></div></div>'
+      +'<dl>'
+      +'<div class="rowr"><dt>Recipient</dt><dd class="name">'+esc(rec.name||'—')+'</dd></div>'
+      +'<div class="rowr"><dt>Programme</dt><dd>'+esc(rec.programme||'—')+'</dd></div>'
+      +'<div class="rowr"><dt>Date issued</dt><dd>'+esc(rec.date||'—')+'</dd></div>'
+      +'<div class="rowr"><dt>Certificate no.</dt><dd class="mono">'+esc(id)+'</dd></div>'
+      +'<div class="rowr"><dt>Issued by</dt><dd>'+esc(rec.issuer||'Domain Blueprint Academy')+'</dd></div>'
+      +'</dl>'
+    );
+  }
+  function notFound(id){
+    render('<div class="state warn"><div class="badge"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#FBF1DE" stroke="#9A6B1F" stroke-width="2"/><path d="M20 11v12" stroke="#9A6B1F" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="28.5" r="1.7" fill="#9A6B1F"/></svg></div>'
+      +'<div><h2>No matching certificate</h2><p>We could not find <span class="mono">'+esc(id)+'</span> in the register. Check the number printed on the certificate and try again.</p></div></div>');
+  }
+  function errored(){
+    render('<div class="state warn"><div class="badge"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#FBF1DE" stroke="#9A6B1F" stroke-width="2"/><path d="M20 11v12" stroke="#9A6B1F" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="28.5" r="1.7" fill="#9A6B1F"/></svg></div>'
+      +'<div><h2>Register unavailable</h2><p>The verification register could not be loaded right now. Please try again in a moment.</p></div></div>');
+  }
+
+  let MAP=null, loadError=false;
+  const dataReady = fetch('certificates.json',{cache:'no-store'})
+    .then(r=>{ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+    .then(j=>{ MAP={}; Object.keys(j).forEach(k=>MAP[k.trim().toUpperCase()]=j[k]); })
+    .catch(()=>{ loadError=true; });
+
+  function lookup(){
+    const id=$('q').value.trim().toUpperCase();
+    if(!id){ location.hash=''; return; }
+    dataReady.then(()=>{
+      if(loadError||!MAP){ errored(); return; }
+      if(Object.prototype.hasOwnProperty.call(MAP,id)) verified(id, MAP[id]);
+      else notFound(id);
+    });
+  }
+
+  $('go').addEventListener('click', lookup);
+  $('q').addEventListener('keydown', e=>{ if(e.key==='Enter') lookup(); });
+
+  // auto-verify from QR link (?id=...)
+  const pre = new URLSearchParams(location.search).get('id');
+  if(pre){ $('q').value = pre.toUpperCase(); lookup(); }
+</script>
+</body>
+</html>
